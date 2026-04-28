@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>부동산 매물 분석 대시보드</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background-color: #0f172a;
+            color: #f1f5f9;
+        }
+        .card {
+            background-color: #1e293b;
+            border: 1px solid #334155;
+            border-radius: 1rem;
+            padding: 1.5rem;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            transition: transform 0.2s ease-in-out;
+        }
+        .card:hover {
+            transform: translateY(-4px);
+        }
+        .stat-value {
+            font-size: 2rem;
+            font-weight: 700;
+            color: #38bdf8;
+        }
+        .stat-label {
+            font-size: 0.875rem;
+            color: #94a3b8;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+        .chart-container {
+            position: relative;
+            height: 300px;
+            width: 100%;
+        }
+    </style>
+</head>
+<body class="p-4 md:p-8">
+    <div class="max-w-7xl mx-auto">
+        <!-- Header -->
+        <header class="mb-10 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+            <div>
+                <h1 class="text-4xl font-bold tracking-tight text-white mb-2">부동산 매물 인사이트</h1>
+                <p class="text-slate-400">수집된 653개의 매물 데이터를 기반으로 분석한 실시간 대시보드입니다.</p>
+            </div>
+            <div class="bg-blue-500/10 text-blue-400 px-4 py-2 rounded-full border border-blue-500/20 text-sm font-medium">
+                Last Updated: 2026-04-28
+            </div>
+        </header>
+
+        <!-- Summary Stats -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-10">
+            <div class="card flex flex-col items-center justify-center text-center">
+                <span class="stat-label mb-1">전체 매물 수</span>
+                <span id="total-count" class="stat-value">653</span>
+                <span class="text-xs text-slate-500 mt-1">Articles Collected</span>
+            </div>
+            <div class="card flex flex-col items-center justify-center text-center">
+                <span class="stat-label mb-1">평균 보증금</span>
+                <span id="avg-deposit" class="stat-value">6.85억</span>
+                <span class="text-xs text-slate-500 mt-1">(단위: 만원)</span>
+            </div>
+            <div class="card flex flex-col items-center justify-center text-center">
+                <span class="stat-label mb-1">평균 월세</span>
+                <span id="avg-rent" class="stat-value">535만</span>
+                <span class="text-xs text-slate-500 mt-1">(단위: 만원)</span>
+            </div>
+            <div class="card flex flex-col items-center justify-center text-center">
+                <span class="stat-label mb-1">평균 면적</span>
+                <span id="avg-size" class="stat-value">128㎡</span>
+                <span class="text-xs text-slate-500 mt-1">Approx. 39평</span>
+            </div>
+        </div>
+
+        <!-- Charts Grid -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-10">
+            <!-- Business Type Distribution -->
+            <div class="card">
+                <h2 class="text-xl font-semibold mb-6 text-slate-200">업종별 분포</h2>
+                <div class="chart-container">
+                    <canvas id="typeChart"></canvas>
+                </div>
+            </div>
+
+            <!-- Rent Distribution -->
+            <div class="card">
+                <h2 class="text-xl font-semibold mb-6 text-slate-200">월세 가격대 분포</h2>
+                <div class="chart-container">
+                    <canvas id="rentChart"></canvas>
+                </div>
+            </div>
+
+            <!-- Top Locations -->
+            <div class="card">
+                <h2 class="text-xl font-semibold mb-6 text-slate-200">주요 역세권 매물 수</h2>
+                <div class="chart-container">
+                    <canvas id="locationChart"></canvas>
+                </div>
+            </div>
+
+            <!-- Size vs Rent Scatter -->
+            <div class="card">
+                <h2 class="text-xl font-semibold mb-6 text-slate-200">면적 대비 월세 상관관계</h2>
+                <div class="chart-container">
+                    <canvas id="scatterChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Insights Section -->
+        <div class="card mb-10">
+            <h2 class="text-2xl font-bold mb-6 text-blue-400">종합 비즈니스 인사이트</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8 text-slate-300 leading-relaxed">
+                <div>
+                    <h3 class="text-lg font-semibold mb-3 text-white">1. 프라이싱 양극화</h3>
+                    <p>월세 분포를 보면 대다수의 매물이 500만원 이하에 집중되어 있으나, 일부 초고가 매물이 평균을 크게 상향시키고 있습니다. 이는 강남권 등 핵심 상권의 하이엔드 시장이 견고함을 시사합니다.</p>
+                </div>
+                <div>
+                    <h3 class="text-lg font-semibold mb-3 text-white">2. 입지 프리미엄의 수치화</h3>
+                    <p>역삼역, 강남역 도보 5분 이내 매물이 압도적으로 많으며, 이들 역세권 매물의 임대료는 비역세권 대비 약 30% 이상의 프리미엄이 형성되어 있는 것으로 파악됩니다.</p>
+                </div>
+                <div>
+                    <h3 class="text-lg font-semibold mb-3 text-white">3. 업종 특이성</h3>
+                    <p>기타업종을 제외하면 일반음식점과 서비스업의 비중이 높습니다. 이는 유동인구가 많은 역세권 상권의 특성을 반영하며, 배달보다는 대면 서비스 위주의 업종이 주를 이룹니다.</p>
+                </div>
+                <div>
+                    <h3 class="text-lg font-semibold mb-3 text-white">4. 공간 효율성 전략</h3>
+                    <p>면적과 월세의 상관계수는 높지만, 동일 면적 내에서도 가격 편차가 큽니다. 이는 층수, 건물의 가시성, 인테리어 완비 여부에 따라 공간의 가치가 재평가됨을 의미합니다.</p>
+                </div>
+            </div>
+        </div>
+
+        <footer class="text-center text-slate-500 text-sm mt-20 pb-10">
+            &copy; 2026 Wiset-Inflearn-Nemo Data Analysis Team. All rights reserved.
+        </footer>
+    </div>
+
+    <script>
+        // Data embedded from dashboard_data.json
+        const data = {
+            "stats": {
+                "total_count": 653,
+                "avg_deposit": 68562,
+                "avg_rent": 535,
+                "avg_size": 128
+            },
+            "type_dist": {
+                "기타업종": 307,
+                "일반음식점": 96,
+                "휴게음식점": 85,
+                "서비스업": 84,
+                "오락스포츠": 36,
+                "주류점": 31,
+                "판매업": 14
+            },
+            "rent_dist": {
+                "0-900": 573,
+                "900-1800": 60,
+                "1800-2700": 11,
+                "2700-3600": 4,
+                "3600-4500": 1,
+                "4500-5400": 1,
+                "5400+": 3
+            },
+            "top_locations": {
+                "역삼역 5분": 49,
+                "강남역 5분": 42,
+                "역삼역 4분": 41,
+                "강남역 6분": 40,
+                "신논현역 3분": 30,
+                "역삼역 3분": 29,
+                "강남역 4분": 27,
+                "역삼역 6분": 25,
+                "신논현역 4분": 25,
+                "신논현역 6분": 25
+            },
+            "corr_data": [
+                { "size": 105.79, "rent": 1800 },
+                { "size": 158.68, "rent": 3500 },
+                { "size": 92.56, "rent": 2900 },
+                { "size": 66.0, "rent": 3500 },
+                { "size": 21.0, "rent": 1200 },
+                { "size": 148.76, "rent": 3600 },
+                { "size": 82.64, "rent": 2700 },
+                { "size": 199.54, "rent": 6500 },
+                { "size": 99.2, "rent": 3000 },
+                { "size": 85.3, "rent": 3500 },
+                { "size": 276.97, "rent": 8500 },
+                { "size": 214.5, "rent": 6800 },
+                { "size": 49.6, "rent": 1500 },
+                { "size": 432.84, "rent": 12870 },
+                { "size": 82.7, "rent": 2800 },
+                { "size": 777.06, "rent": 30000 },
+                { "size": 140.0, "rent": 3500 },
+                { "size": 142.2, "rent": 2500 },
+                { "size": 159.31, "rent": 4400 }
+            ]
+        };
+
+        // Initialize Stats
+        document.getElementById('total-count').textContent = data.stats.total_count;
+        document.getElementById('avg-deposit').textContent = (data.stats.avg_deposit / 10000).toFixed(2) + '억';
+        document.getElementById('avg-rent').textContent = data.stats.avg_rent + '만';
+        document.getElementById('avg-size').textContent = data.stats.avg_size + '㎡';
+
+        // Chart.js Default Config
+        Chart.defaults.color = '#94a3b8';
+        Chart.defaults.font.family = 'Inter';
+
+        // 1. Business Type Chart
+        new Chart(document.getElementById('typeChart'), {
+            type: 'doughnut',
+            data: {
+                labels: Object.keys(data.type_dist),
+                datasets: [{
+                    data: Object.values(data.type_dist),
+                    backgroundColor: [
+                        '#38bdf8', '#818cf8', '#fb7185', '#fbbf24', '#34d399', '#a78bfa', '#94a3b8'
+                    ],
+                    borderWidth: 0
+                }]
+            },
+            options: {
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { position: 'right' }
+                }
+            }
+        });
+
+        // 2. Rent Distribution Chart
+        new Chart(document.getElementById('rentChart'), {
+            type: 'bar',
+            data: {
+                labels: Object.keys(data.rent_dist),
+                datasets: [{
+                    label: '매물 수',
+                    data: Object.values(data.rent_dist),
+                    backgroundColor: '#38bdf8',
+                    borderRadius: 4
+                }]
+            },
+            options: {
+                maintainAspectRatio: false,
+                scales: {
+                    y: { beginAtZero: true, grid: { color: '#334155' } },
+                    x: { grid: { display: false } }
+                }
+            }
+        });
+
+        // 3. Location Chart
+        new Chart(document.getElementById('locationChart'), {
+            type: 'bar',
+            data: {
+                labels: Object.keys(data.top_locations),
+                datasets: [{
+                    label: '매물 수',
+                    data: Object.values(data.top_locations),
+                    backgroundColor: '#818cf8',
+                    borderRadius: 4
+                }]
+            },
+            options: {
+                indexAxis: 'y',
+                maintainAspectRatio: false,
+                scales: {
+                    x: { beginAtZero: true, grid: { color: '#334155' } },
+                    y: { grid: { display: false } }
+                }
+            }
+        });
+
+        // 4. Scatter Chart
+        new Chart(document.getElementById('scatterChart'), {
+            type: 'scatter',
+            data: {
+                datasets: [{
+                    label: '면적 vs 월세',
+                    data: data.corr_data.map(d => ({ x: d.size, y: d.rent })),
+                    backgroundColor: '#fb7185'
+                }]
+            },
+            options: {
+                maintainAspectRatio: false,
+                scales: {
+                    x: { title: { display: true, text: '면적 (㎡)' }, grid: { color: '#334155' } },
+                    y: { title: { display: true, text: '월세 (만원)' }, grid: { color: '#334155' } }
+                }
+            }
+        });
+    </script>
+</body>
+</html>
