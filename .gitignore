@@ -55,3 +55,4 @@ uv.lock
 
 # Agents
 .agents/
+.gemini/
